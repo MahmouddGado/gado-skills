@@ -1,0 +1,33 @@
+import 'package:__core__/__core__.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:__package__/features/__feature__/presentation/cubit/__feature___cubit.dart';
+import 'package:__package__/features/__feature__/presentation/cubit/__feature___state.dart';
+import 'package:__package__/features/__feature__/presentation/widgets/__entity___tile.dart';
+
+final class __Feature__View extends StatelessWidget {
+  const __Feature__View({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.__featureCamel__Title)),
+      body: BlocBuilder<__Feature__Cubit, __Feature__State>(
+        builder: (context, state) => switch (state) {
+          __Feature__Initial() || __Feature__Loading() => const AppLoading(),
+          __Feature__Loaded(:final items) when items.isEmpty => AppEmpty(message: l10n.__featureCamel__Empty),
+          __Feature__Loaded(:final items) => ListView.builder(
+            itemCount: items.length,
+            itemBuilder: (_, i) => __Entity__Tile(item: items[i], key: ValueKey(items[i].id)),
+          ),
+          __Feature__Failure(:final failure) => AppError(
+            failure: failure,
+            onRetry: context.read<__Feature__Cubit>().load,
+          ),
+        },
+      ),
+    );
+  }
+}

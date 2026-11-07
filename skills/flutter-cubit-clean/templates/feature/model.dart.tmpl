@@ -1,0 +1,17 @@
+import 'package:json_annotation/json_annotation.dart';
+
+import 'package:__package__/features/__feature__/domain/entities/__entity__.dart';
+
+part '__entity___model.g.dart';
+
+@JsonSerializable(createToJson: false, fieldRename: FieldRename.snake)
+final class __Entity__Model {
+  const __Entity__Model({required this.id, required this.name});
+
+  factory __Entity__Model.fromJson(Map<String, dynamic> json) => _$__Entity__ModelFromJson(json);
+
+  final String id;
+  final String name;
+
+  __Entity__ toEntity() => __Entity__(id: id, name: name);
+}

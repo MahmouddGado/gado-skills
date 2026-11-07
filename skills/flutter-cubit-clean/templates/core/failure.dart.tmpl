@@ -1,0 +1,32 @@
+import 'package:equatable/equatable.dart';
+
+sealed class Failure extends Equatable {
+  const Failure(this.code, [this.message]);
+
+  /// Stable backend error code, e.g. TRIP_FULL.
+  final String code;
+  final String? message;
+
+  @override
+  List<Object?> get props => [code, message];
+}
+
+final class NetworkFailure extends Failure {
+  const NetworkFailure() : super('NETWORK');
+}
+
+final class UnauthorizedFailure extends Failure {
+  const UnauthorizedFailure() : super('UNAUTHORIZED');
+}
+
+final class ServerFailure extends Failure {
+  const ServerFailure(super.code, [super.message]);
+}
+
+final class ValidationFailure extends Failure {
+  const ValidationFailure(super.code, [super.message]);
+}
+
+final class UnexpectedFailure extends Failure {
+  const UnexpectedFailure() : super('UNEXPECTED');
+}

@@ -1,0 +1,36 @@
+import 'package:__core__/__core__.dart';
+import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:__package__/features/__feature__/domain/entities/__entity__.dart';
+import 'package:__package__/features/__feature__/domain/usecases/get___entity__s.dart';
+import 'package:__package__/features/__feature__/presentation/cubit/__feature___cubit.dart';
+import 'package:__package__/features/__feature__/presentation/cubit/__feature___state.dart';
+
+class MockGet__Entity__s extends Mock implements Get__Entity__s {}
+
+void main() {
+  late MockGet__Entity__s get__Entity__s;
+  const item = __Entity__(id: '1', name: 'name');
+
+  setUpAll(() => registerFallbackValue(const NoParams()));
+  setUp(() => get__Entity__s = MockGet__Entity__s());
+
+  group('__Feature__Cubit.load', () {
+    blocTest<__Feature__Cubit, __Feature__State>(
+      'emits loading then loaded on success',
+      setUp: () => when(() => get__Entity__s(any())).thenAnswer((_) async => const Ok([item])),
+      build: () => __Feature__Cubit(get__Entity__s),
+      act: (cubit) => cubit.load(),
+      expect: () => [const __Feature__Loading(), const __Feature__Loaded([item])],
+    );
+
+    blocTest<__Feature__Cubit, __Feature__State>(
+      'emits loading then failure on error',
+      setUp: () => when(() => get__Entity__s(any())).thenAnswer((_) async => const Err(NetworkFailure())),
+      build: () => __Feature__Cubit(get__Entity__s),
+      act: (cubit) => cubit.load(),
+      expect: () => [const __Feature__Loading(), const __Feature__Failure(NetworkFailure())],
+    );
+  });
+}

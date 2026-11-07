@@ -1,0 +1,37 @@
+import 'package:__core__/__core__.dart';
+import 'package:equatable/equatable.dart';
+
+import 'package:__package__/features/__feature__/domain/entities/__entity__.dart';
+
+sealed class __Feature__State extends Equatable {
+  const __Feature__State();
+
+  @override
+  List<Object?> get props => [];
+}
+
+final class __Feature__Initial extends __Feature__State {
+  const __Feature__Initial();
+}
+
+final class __Feature__Loading extends __Feature__State {
+  const __Feature__Loading();
+}
+
+final class __Feature__Loaded extends __Feature__State {
+  const __Feature__Loaded(this.items);
+
+  final List<__Entity__> items;
+
+  @override
+  List<Object?> get props => [items];
+}
+
+final class __Feature__Failure extends __Feature__State {
+  const __Feature__Failure(this.failure);
+
+  final Failure failure;
+
+  @override
+  List<Object?> get props => [failure];
+}

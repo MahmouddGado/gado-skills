@@ -1,0 +1,23 @@
+import 'dart:developer';
+
+import 'package:__core__/core/result/result.dart';
+import 'package:__core__/core/error/api_exception.dart';
+import 'package:__core__/core/error/failure.dart';
+
+Failure mapException(Object error) => switch (error) {
+  ApiException(code: 'NETWORK') => const NetworkFailure(),
+  ApiException(statusCode: 401) => const UnauthorizedFailure(),
+  ApiException(statusCode: 422, :final code, :final message) => ValidationFailure(code, message),
+  ApiException(:final code, :final message) => ServerFailure(code, message),
+  _ => const UnexpectedFailure(),
+};
+
+/// Runs a data call and converts any thrown error into an [Err].
+Future<Result<T>> guard<T>(Future<T> Function() body) async {
+  try {
+    return Ok(await body());
+  } on Object catch (e, s) {
+    log('repository error: ${e.runtimeType}', error: e, stackTrace: s);
+    return Err(mapException(e));
+  }
+}

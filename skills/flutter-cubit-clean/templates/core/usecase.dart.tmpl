@@ -1,0 +1,9 @@
+import 'package:__core__/core/result/result.dart';
+
+abstract interface class UseCase<T, P> {
+  Future<Result<T>> call(P params);
+}
+
+final class NoParams {
+  const NoParams();
+}

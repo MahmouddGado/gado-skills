@@ -1,0 +1,24 @@
+import 'package:__core__/__core__.dart';
+import 'package:injectable/injectable.dart';
+
+import 'package:__package__/features/__feature__/data/models/__entity___model.dart';
+
+abstract interface class __Feature__RemoteDataSource {
+  Future<List<__Entity__Model>> get__Entity__s();
+}
+
+@LazySingleton(as: __Feature__RemoteDataSource)
+final class __Feature__RemoteDataSourceImpl implements __Feature__RemoteDataSource {
+  const __Feature__RemoteDataSourceImpl(this._client);
+
+  static const _path = '/api/v1/__role__/__feature__';
+
+  final ApiClient _client;
+
+  @override
+  Future<List<__Entity__Model>> get__Entity__s() async {
+    final json = await _client.get(_path);
+    final items = json['items'] as List<dynamic>;
+    return items.map((e) => __Entity__Model.fromJson(e as Map<String, dynamic>)).toList();
+  }
+}

@@ -1,0 +1,17 @@
+import 'package:__core__/__core__.dart';
+import 'package:injectable/injectable.dart';
+
+import 'package:__package__/features/__feature__/domain/entities/__entity__.dart';
+import 'package:__package__/features/__feature__/domain/repositories/__feature___repository.dart';
+import 'package:__package__/features/__feature__/data/datasources/__feature___remote_datasource.dart';
+
+@LazySingleton(as: __Feature__Repository)
+final class __Feature__RepositoryImpl implements __Feature__Repository {
+  const __Feature__RepositoryImpl(this._remote);
+
+  final __Feature__RemoteDataSource _remote;
+
+  @override
+  Future<Result<List<__Entity__>>> get__Entity__s() =>
+      guard(() async => (await _remote.get__Entity__s()).map((m) => m.toEntity()).toList());
+}

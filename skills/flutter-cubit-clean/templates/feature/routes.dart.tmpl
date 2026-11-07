@@ -1,0 +1,14 @@
+import 'package:go_router/go_router.dart';
+
+import 'package:__package__/features/__feature__/presentation/pages/__feature___page.dart';
+
+abstract final class __Feature__Routes {
+  static const name = '__feature__';
+  static const path = '/__feature__';
+
+  static GoRoute route() => GoRoute(
+    name: name,
+    path: path,
+    builder: (_, __) => const __Feature__Page(),
+  );
+}

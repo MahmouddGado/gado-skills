@@ -1,0 +1,22 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:__package__/app/di/injection.dart';
+import 'package:__package__/features/__feature__/presentation/cubit/__feature___cubit.dart';
+import 'package:__package__/features/__feature__/presentation/pages/__feature___view.dart';
+
+final class __Feature__Page extends StatelessWidget {
+  const __Feature__Page({super.key});
+
+  @override
+  Widget build(BuildContext context) => BlocProvider(
+    create: (_) {
+      final cubit = getIt<__Feature__Cubit>();
+      unawaited(cubit.load());
+      return cubit;
+    },
+    child: const __Feature__View(),
+  );
+}

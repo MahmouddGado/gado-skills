@@ -1,0 +1,24 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "gado-skills",
+  "description": "Engineering skills for the Gado Ride platform and other professional Flutter projects.",
+  "owner": {
+    "name": "Mahmoud Gado",
+    "url": "https://github.com/MahmouddGado"
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "flutter-cubit-clean",
+      "description": "Plan and implement Flutter features with Cubit, Clean Architecture, get_it + injectable, go_router, a sealed Result type, Arabic-first l10n and a 400-500 line limit per file.",
+      "source": "./",
+      "strict": false,
+      "version": "1.0.0",
+      "category": "development",
+      "keywords": ["flutter", "dart", "cubit", "bloc", "clean-architecture", "mobile"],
+      "skills": ["./skills/flutter-cubit-clean"]
+    }
+  ]
+}

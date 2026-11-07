@@ -1,0 +1,12 @@
+import 'package:flutter/material.dart';
+
+import 'package:__package__/features/__feature__/domain/entities/__entity__.dart';
+
+final class __Entity__Tile extends StatelessWidget {
+  const __Entity__Tile({required this.item, super.key});
+
+  final __Entity__ item;
+
+  @override
+  Widget build(BuildContext context) => ListTile(title: Text(item.name));
+}

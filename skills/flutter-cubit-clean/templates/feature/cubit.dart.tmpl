@@ -1,0 +1,20 @@
+import 'package:__core__/__core__.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:injectable/injectable.dart';
+
+import 'package:__package__/features/__feature__/domain/usecases/get___entity__s.dart';
+import 'package:__package__/features/__feature__/presentation/cubit/__feature___state.dart';
+
+@injectable
+class __Feature__Cubit extends Cubit<__Feature__State> {
+  __Feature__Cubit(this._get__Entity__s) : super(const __Feature__Initial());
+
+  final Get__Entity__s _get__Entity__s;
+
+  Future<void> load() async {
+    emit(const __Feature__Loading());
+    final result = await _get__Entity__s(const NoParams());
+    if (isClosed) return;
+    emit(result.when(ok: __Feature__Loaded.new, err: __Feature__Failure.new));
+  }
+}

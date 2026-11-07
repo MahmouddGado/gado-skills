@@ -1,0 +1,15 @@
+import 'package:__core__/__core__.dart';
+import 'package:injectable/injectable.dart';
+
+import 'package:__package__/features/__feature__/domain/entities/__entity__.dart';
+import 'package:__package__/features/__feature__/domain/repositories/__feature___repository.dart';
+
+@injectable
+class Get__Entity__s implements UseCase<List<__Entity__>, NoParams> {
+  const Get__Entity__s(this._repository);
+
+  final __Feature__Repository _repository;
+
+  @override
+  Future<Result<List<__Entity__>>> call(NoParams params) => _repository.get__Entity__s();
+}

@@ -1,0 +1,34 @@
+import 'package:dio/dio.dart';
+import 'package:injectable/injectable.dart';
+
+import 'package:__core__/core/error/api_exception.dart';
+
+@lazySingleton
+final class ApiClient {
+  const ApiClient(this._dio);
+
+  final Dio _dio;
+
+  Future<Map<String, dynamic>> get(String path, {Map<String, dynamic>? query}) =>
+      _send(() => _dio.get<Map<String, dynamic>>(path, queryParameters: query));
+
+  Future<Map<String, dynamic>> post(String path, {Object? body}) =>
+      _send(() => _dio.post<Map<String, dynamic>>(path, data: body));
+
+  Future<Map<String, dynamic>> put(String path, {Object? body}) =>
+      _send(() => _dio.put<Map<String, dynamic>>(path, data: body));
+
+  Future<Map<String, dynamic>> delete(String path) =>
+      _send(() => _dio.delete<Map<String, dynamic>>(path));
+
+  Future<Map<String, dynamic>> _send(
+    Future<Response<Map<String, dynamic>>> Function() request,
+  ) async {
+    try {
+      final response = await request();
+      return response.data ?? const {};
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+}

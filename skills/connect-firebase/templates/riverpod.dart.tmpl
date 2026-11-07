@@ -1,0 +1,55 @@
+// TEMPLATE — Riverpod 2.x state layer. Match the project: StateNotifier vs Notifier/AsyncNotifier,
+// providers in a central di/providers.dart vs at the bottom of the service file.
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../models/item_model.dart';
+import '../services/item_service.dart';
+
+// Service (replace any Mock*Service/Mock*Repository wiring with this real one).
+final itemServiceProvider = Provider<ItemService>((ref) => ItemService());
+
+// Reads — live streams. Use the project's current-user provider for the uid.
+final itemsByUserProvider = StreamProvider.autoDispose.family<List<ItemModel>, String>(
+  (ref, userId) => ref.watch(itemServiceProvider).watchByUser(userId),
+);
+
+final itemByIdProvider = StreamProvider.autoDispose.family<ItemModel?, String>(
+  (ref, id) => ref.watch(itemServiceProvider).watchById(id),
+);
+
+// Writes — a controller exposing AsyncValue<void> for saving state.
+class ItemController extends StateNotifier<AsyncValue<void>> {
+  ItemController(this._service) : super(const AsyncData(null));
+
+  final ItemService _service;
+
+  Future<String> add(ItemModel item) => _run(() => _service.create(item));
+  Future<void> update(ItemModel item) => _run(() => _service.update(item));
+  Future<void> remove(String id) => _run(() => _service.delete(id));
+
+  Future<T> _run<T>(Future<T> Function() action) async {
+    state = const AsyncLoading();
+    try {
+      final result = await action();
+      state = const AsyncData(null);
+      return result;
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      rethrow;
+    }
+  }
+}
+
+final itemControllerProvider = StateNotifierProvider.autoDispose<ItemController, AsyncValue<void>>(
+  (ref) => ItemController(ref.watch(itemServiceProvider)),
+);
+
+// Screen usage:
+//   final itemsAsync = ref.watch(itemsByUserProvider(uid));
+//   itemsAsync.when(
+//     data: (items) => items.isEmpty ? const EmptyState() : ListView(...),
+//     loading: () => const Center(child: CircularProgressIndicator()),
+//     error: (e, _) => ErrorView(message: '$e', onRetry: () => ref.invalidate(itemsByUserProvider(uid))),
+//   );
+//   final saving = ref.watch(itemControllerProvider).isLoading;
+//   await ref.read(itemControllerProvider.notifier).add(item);

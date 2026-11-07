@@ -7,7 +7,7 @@
     "url": "https://github.com/MahmouddGado"
   },
   "metadata": {
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "plugins": [
     {
@@ -17,8 +17,36 @@
       "strict": false,
       "version": "1.0.0",
       "category": "development",
-      "keywords": ["flutter", "dart", "cubit", "bloc", "clean-architecture", "mobile"],
-      "skills": ["./skills/flutter-cubit-clean"]
+      "keywords": [
+        "flutter",
+        "dart",
+        "cubit",
+        "bloc",
+        "clean-architecture",
+        "mobile"
+      ],
+      "skills": [
+        "./skills/flutter-cubit-clean"
+      ]
+    },
+    {
+      "name": "connect-firebase",
+      "description": "Wire one module of a Flutter app to Firebase Auth + Cloud Firestore end to end: complete validated models, service, state layer (follows the project), screens without mock data, and validated forms.",
+      "source": "./",
+      "strict": false,
+      "version": "1.0.0",
+      "category": "development",
+      "keywords": [
+        "flutter",
+        "firebase",
+        "firestore",
+        "firebase-auth",
+        "forms",
+        "validation"
+      ],
+      "skills": [
+        "./skills/connect-firebase"
+      ]
     }
   ]
 }

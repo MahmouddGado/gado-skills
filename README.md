@@ -8,6 +8,7 @@ They work with Claude Code and other agents that support the open `SKILL.md` for
 | Skill | What it does |
 | --- | --- |
 | [`flutter-cubit-clean`](skills/flutter-cubit-clean/SKILL.md) | Plan and implement Flutter features with Cubit, Clean Architecture, get_it + injectable, go_router, a sealed `Result` type, Arabic-first l10n and a 400–500 line limit per file. Has a plan mode and an implement mode. |
+| [`connect-firebase`](skills/connect-firebase/SKILL.md) | Wire one module of a Flutter app to Firebase Auth + Cloud Firestore end to end: complete, validated models, a service, the project's state layer, real screens instead of mock data, and full form validation. Run as `/connect-firebase <Module> [project-path]`. |
 
 ## Install
 
@@ -18,6 +19,7 @@ Pick **one** method. Each lets you choose which skills to install.
 ```text
 /plugin marketplace add MahmouddGado/gado-skills
 /plugin install flutter-cubit-clean@gado-skills
+/plugin install connect-firebase@gado-skills
 ```
 
 Or run `/plugin`, open **gado-skills** and tick the skills you want.
@@ -28,6 +30,7 @@ Update later with `/plugin marketplace update gado-skills`.
 ```bash
 npx skills add MahmouddGado/gado-skills                          # interactive picker
 npx skills add MahmouddGado/gado-skills --skill flutter-cubit-clean
+npx skills add MahmouddGado/gado-skills --skill connect-firebase
 npx skills add MahmouddGado/gado-skills --list                   # list only
 ```
 
@@ -86,6 +89,19 @@ bash ~/.claude/skills/flutter-cubit-clean/scripts/check_file_length.sh apps/mobi
 The scaffold templates are checked against Flutter 3.47 / Dart 3.13 with
 `very_good_analysis`, `flutter_bloc` 9, `injectable` 3, `go_router` 18 and
 `bloc_test` 10.
+
+## Using `connect-firebase`
+
+```text
+/connect-firebase Auth
+/connect-firebase Medication path/to/flutter_app
+```
+
+It detects the project's own conventions (Provider, Riverpod, Bloc/Cubit or setState;
+model naming; date format; validators), shows a module map before editing, completes
+and validates the models, connects the service, state layer and screens, removes fake
+saves and mock data, and adds validators to every form. It only suggests Firestore
+rules and indexes — it never deploys them or runs `flutterfire configure` for you.
 
 ## Add a new skill
 

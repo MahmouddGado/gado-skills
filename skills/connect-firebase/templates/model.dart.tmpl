@@ -1,0 +1,127 @@
+// TEMPLATE — adapt names to the project:
+//   * fromMap/toMap vs fromJson/toJson (keep the project's naming; you may add the other as alias)
+//   * Timestamp vs ISO dates (keep the project's write format; FsParse reads both)
+//   * remove == / hashCode / toString if the project's models don't use them
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../core/utils/firestore_safe.dart';
+import '../core/utils/validators.dart';
+
+enum ItemStatus { active, archived }
+
+class ItemModel {
+  final String id;
+  final String userId; // owner — used in where('userId') queries and rules
+  final String name;
+  final String? description;
+  final double price;
+  final int quantity;
+  final ItemStatus status;
+  final List<String> tags;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+
+  const ItemModel({
+    required this.id,
+    required this.userId,
+    required this.name,
+    this.description,
+    required this.price,
+    this.quantity = 1,
+    this.status = ItemStatus.active,
+    this.tags = const [],
+    required this.createdAt,
+    this.updatedAt,
+  });
+
+  // ---------- Firestore ----------
+  factory ItemModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) =>
+      ItemModel.fromMap(doc.data() ?? const {}, doc.id);
+
+  factory ItemModel.fromMap(Map<String, dynamic> map, String id) => ItemModel(
+        id: id,
+        userId: FsParse.str(map['userId']),
+        name: FsParse.str(map['name']),
+        description: map['description'] as String?,
+        price: FsParse.toDouble(map['price']),
+        quantity: FsParse.toInt(map['quantity'], fallback: 1),
+        status: FsParse.enumByName(ItemStatus.values, map['status'], ItemStatus.active),
+        tags: FsParse.stringList(map['tags']),
+        createdAt: FsParse.date(map['createdAt'], fallback: DateTime.now()),
+        updatedAt: FsParse.dateOrNull(map['updatedAt']),
+      );
+
+  /// Fields written on every save. Dates: Timestamp style shown; for ISO projects use toIso8601String().
+  Map<String, dynamic> toMap() => {
+        'userId': userId,
+        'name': name.trim(),
+        'description': description?.trim(),
+        'price': price,
+        'quantity': quantity,
+        'status': status.name,
+        'tags': tags,
+        'createdAt': Timestamp.fromDate(createdAt),
+        'updatedAt': updatedAt == null ? null : Timestamp.fromDate(updatedAt!),
+      };
+
+  /// Use on create: server time for audit fields.
+  Map<String, dynamic> toCreateMap() => {
+        ...toMap(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+  /// Use on update: never overwrite createdAt.
+  Map<String, dynamic> toUpdateMap() => {
+        ...toMap()..remove('createdAt'),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+  // ---------- Validation ----------
+  /// First business/format error, or null when valid. Called by the service before writes.
+  String? validate() {
+    return (userId.isEmpty ? 'Missing owner' : null) ??
+        Validators.name(name) ??
+        (price < 0 ? 'Price must be 0 or more' : null) ??
+        (quantity < 1 ? 'Quantity must be at least 1' : null) ??
+        ((description?.length ?? 0) > 500 ? 'Description is too long' : null);
+  }
+
+  bool get isValid => validate() == null;
+
+  // ---------- Utils ----------
+  ItemModel copyWith({
+    String? id,
+    String? userId,
+    String? name,
+    String? description,
+    double? price,
+    int? quantity,
+    ItemStatus? status,
+    List<String>? tags,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) =>
+      ItemModel(
+        id: id ?? this.id,
+        userId: userId ?? this.userId,
+        name: name ?? this.name,
+        description: description ?? this.description,
+        price: price ?? this.price,
+        quantity: quantity ?? this.quantity,
+        status: status ?? this.status,
+        tags: tags ?? this.tags,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || (other is ItemModel && other.id == id && other.updatedAt == updatedAt);
+
+  @override
+  int get hashCode => Object.hash(id, updatedAt);
+
+  @override
+  String toString() => 'ItemModel(id: $id, name: $name)';
+}

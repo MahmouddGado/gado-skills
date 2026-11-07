@@ -1,0 +1,106 @@
+// TEMPLATE — shared validators. Create only if the project has none; otherwise extend the existing file
+// with its naming. Translate messages to the project's UI language (see references/validators.md).
+import 'package:flutter/widgets.dart';
+
+enum PhoneFormat { generic, saudi, egypt }
+
+class Validators {
+  Validators._();
+
+  static final RegExp _email = RegExp(r'^[\w.+-]+@([\w-]+\.)+[A-Za-z]{2,}$');
+  static final RegExp _name = RegExp(r"^[\p{L} .'-]+$", unicode: true);
+  static final Map<PhoneFormat, RegExp> _phone = {
+    PhoneFormat.generic: RegExp(r'^\+?[0-9]{8,15}$'),
+    PhoneFormat.saudi: RegExp(r'^(05\d{8}|\+?9665\d{8})$'),
+    PhoneFormat.egypt: RegExp(r'^(01[0125]\d{8}|\+?201[0125]\d{8})$'),
+  };
+
+  /// Project default — set once (e.g. PhoneFormat.saudi for +966 apps).
+  static PhoneFormat defaultPhoneFormat = PhoneFormat.generic;
+
+  static bool _empty(String? v) => v == null || v.trim().isEmpty;
+
+  static String? required(String? v, {String field = 'This field'}) => _empty(v) ? '$field is required' : null;
+
+  static String? email(String? v) {
+    if (_empty(v)) return 'Email is required';
+    return _email.hasMatch(v!.trim()) ? null : 'Enter a valid email address';
+  }
+
+  /// Register / change-password rule. Login screens should use `required` only.
+  static String? password(String? v, {int min = 8}) {
+    if (v == null || v.isEmpty) return 'Password is required';
+    if (v.length < min) return 'Password must be at least $min characters';
+    if (!RegExp(r'[A-Za-z]').hasMatch(v) || !RegExp(r'\d').hasMatch(v)) {
+      return 'Password must contain letters and numbers';
+    }
+    return null;
+  }
+
+  static String? confirmPassword(String? v, String original) {
+    if (v == null || v.isEmpty) return 'Please confirm the password';
+    return v == original ? null : 'Passwords do not match';
+  }
+
+  static String? phone(String? v, {PhoneFormat? format, bool isRequired = true}) {
+    if (_empty(v)) return isRequired ? 'Phone number is required' : null;
+    final cleaned = v!.replaceAll(RegExp(r'[\s-]'), '');
+    return _phone[format ?? defaultPhoneFormat]!.hasMatch(cleaned) ? null : 'Enter a valid phone number';
+  }
+
+  static String? name(String? v, {String field = 'Name', int min = 2, int max = 50}) {
+    if (_empty(v)) return '$field is required';
+    final t = v!.trim();
+    if (t.length < min || t.length > max) return '$field must be $min–$max characters';
+    return _name.hasMatch(t) ? null : '$field contains invalid characters';
+  }
+
+  static String? minLength(String? v, int min, {String field = 'This field'}) {
+    if (_empty(v)) return '$field is required';
+    return v!.trim().length < min ? 'Must be at least $min characters' : null;
+  }
+
+  static String? maxLength(String? v, int max) => (v?.length ?? 0) > max ? 'Must be at most $max characters' : null;
+
+  static String? number(String? v, {double? min, double? max, String field = 'Value', bool isRequired = true}) {
+    if (_empty(v)) return isRequired ? '$field is required' : null;
+    final n = double.tryParse(v!.trim().replaceAll(',', '.'));
+    if (n == null) return 'Enter a valid number';
+    if (min != null && n < min) return '$field must be at least $min';
+    if (max != null && n > max) return '$field must be at most $max';
+    return null;
+  }
+
+  static String? integer(String? v, {int? min, int? max, String field = 'Value', bool isRequired = true}) {
+    if (_empty(v)) return isRequired ? '$field is required' : null;
+    final n = int.tryParse(v!.trim());
+    if (n == null) return 'Enter a whole number';
+    if (min != null && n < min) return '$field must be at least $min';
+    if (max != null && n > max) return '$field must be at most $max';
+    return null;
+  }
+
+  static String? url(String? v, {bool isRequired = true}) {
+    if (_empty(v)) return isRequired ? 'URL is required' : null;
+    final u = Uri.tryParse(v!.trim());
+    final ok = u != null && (u.scheme == 'http' || u.scheme == 'https') && u.host.isNotEmpty;
+    return ok ? null : 'Enter a valid URL';
+  }
+
+  static String? otp(String? v, {int length = 6}) {
+    if (_empty(v)) return 'Code is required';
+    return RegExp('^\\d{$length}\$').hasMatch(v!.trim()) ? null : 'Enter the $length-digit code';
+  }
+
+  /// For dropdowns / pickers: FormField<T> validator.
+  static FormFieldValidator<T> select<T>(String field) => (T? v) => v == null ? 'Please select $field' : null;
+
+  /// Chain several validators; returns the first error.
+  static FormFieldValidator<String> compose(List<FormFieldValidator<String>> validators) => (v) {
+        for (final validate in validators) {
+          final r = validate(v);
+          if (r != null) return r;
+        }
+        return null;
+      };
+}

@@ -1,0 +1,60 @@
+// Shared tolerant parsing helpers for Firestore data.
+// Place at lib/core/utils/firestore_safe.dart (or the project's utils folder). Create once per project.
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class FsParse {
+  FsParse._();
+
+  /// Accepts Timestamp, DateTime, ISO String, int (millis) or null.
+  static DateTime? dateOrNull(dynamic v) {
+    if (v == null) return null;
+    if (v is Timestamp) return v.toDate();
+    if (v is DateTime) return v;
+    if (v is String) return DateTime.tryParse(v);
+    if (v is int) return DateTime.fromMillisecondsSinceEpoch(v);
+    return null;
+  }
+
+  static DateTime date(dynamic v, {DateTime? fallback}) =>
+      dateOrNull(v) ?? fallback ?? DateTime.fromMillisecondsSinceEpoch(0);
+
+  static double toDouble(dynamic v, {double fallback = 0}) {
+    if (v is num) return v.toDouble();
+    if (v is String) return double.tryParse(v.replaceAll(',', '.')) ?? fallback;
+    return fallback;
+  }
+
+  static int toInt(dynamic v, {int fallback = 0}) {
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    if (v is String) return int.tryParse(v) ?? fallback;
+    return fallback;
+  }
+
+  static bool toBool(dynamic v, {bool fallback = false}) {
+    if (v is bool) return v;
+    if (v is String) return v.toLowerCase() == 'true';
+    if (v is num) return v != 0;
+    return fallback;
+  }
+
+  static String str(dynamic v, {String fallback = ''}) => v?.toString() ?? fallback;
+
+  static T enumByName<T extends Enum>(List<T> values, dynamic v, T fallback) {
+    if (v is String) {
+      for (final e in values) {
+        if (e.name == v || e.name.toLowerCase() == v.toLowerCase()) return e;
+      }
+    }
+    return fallback;
+  }
+
+  static List<String> stringList(dynamic v) =>
+      v is List ? v.map((e) => e.toString()).toList() : const <String>[];
+
+  static Map<String, dynamic> map(dynamic v) =>
+      v is Map ? Map<String, dynamic>.from(v) : <String, dynamic>{};
+
+  static List<T> modelList<T>(dynamic v, T Function(Map<String, dynamic>) fromMap) =>
+      v is List ? v.whereType<Map>().map((e) => fromMap(Map<String, dynamic>.from(e))).toList() : <T>[];
+}

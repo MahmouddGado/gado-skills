@@ -1,0 +1,107 @@
+// TEMPLATE — Firebase Auth + users/{uid} profile doc. Adapt to the project's UserModel and style.
+// If the project's model is called `User`, keep `hide User` below (or import with a prefix).
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide User;
+import 'package:firebase_auth/firebase_auth.dart' as fb show User;
+
+import '../models/user_model.dart';
+
+class AuthService {
+  AuthService({FirebaseAuth? auth, FirebaseFirestore? firestore})
+      : _auth = auth ?? FirebaseAuth.instance,
+        _db = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _db;
+
+  CollectionReference<Map<String, dynamic>> get _users => _db.collection('users');
+
+  Stream<fb.User?> authStateChanges() => _auth.authStateChanges();
+  fb.User? get currentUser => _auth.currentUser;
+  String? get uid => _auth.currentUser?.uid;
+
+  Future<UserModel> signIn({required String email, required String password}) => _guard(() async {
+        final cred = await _auth.signInWithEmailAndPassword(email: email.trim(), password: password);
+        final user = await getUserModel(cred.user!.uid);
+        if (user == null) throw Exception('Account profile not found.');
+        return user;
+      });
+
+  /// Creates the Auth account AND users/{uid} with every profile field from the form. Never stores the password.
+  Future<UserModel> signUp({required String email, required String password, required UserModel profile}) =>
+      _guard(() async {
+        final cred = await _auth.createUserWithEmailAndPassword(email: email.trim(), password: password);
+        final uid = cred.user!.uid;
+        await cred.user!.updateDisplayName(profile.name);
+        final user = profile.copyWith(id: uid, email: email.trim(), createdAt: DateTime.now());
+        final error = user.validate();
+        if (error != null) {
+          await cred.user!.delete(); // roll back the auth account
+          throw Exception(error);
+        }
+        await _users.doc(uid).set(user.toCreateMap());
+        return user;
+      });
+
+  Future<void> signOut() => _auth.signOut();
+
+  Future<void> sendPasswordReset(String email) => _guard(() => _auth.sendPasswordResetEmail(email: email.trim()));
+
+  Future<UserModel?> getUserModel(String uid) async {
+    final doc = await _users.doc(uid).get();
+    return doc.exists ? UserModel.fromFirestore(doc) : null;
+  }
+
+  Stream<UserModel?> watchUserModel(String uid) =>
+      _users.doc(uid).snapshots().map((d) => d.exists ? UserModel.fromFirestore(d) : null);
+
+  Future<void> updateProfile(UserModel user) => _guard(() async {
+        final error = user.validate();
+        if (error != null) throw Exception(error);
+        await _users.doc(user.id).update(user.toUpdateMap());
+        if (_auth.currentUser?.displayName != user.name) await _auth.currentUser?.updateDisplayName(user.name);
+      });
+
+  Future<void> changePassword({required String currentPassword, required String newPassword}) => _guard(() async {
+        final user = _auth.currentUser!;
+        final cred = EmailAuthProvider.credential(email: user.email!, password: currentPassword);
+        await user.reauthenticateWithCredential(cred);
+        await user.updatePassword(newPassword);
+      });
+
+  Future<T> _guard<T>(Future<T> Function() action) async {
+    try {
+      return await action();
+    } on FirebaseAuthException catch (e) {
+      throw Exception(authMessage(e.code));
+    } on FirebaseException catch (e) {
+      throw Exception(e.message ?? 'Something went wrong.');
+    }
+  }
+
+  /// Translate to the project's UI language.
+  static String authMessage(String code) {
+    switch (code) {
+      case 'invalid-email':
+        return 'Invalid email address.'; // 'البريد الإلكتروني غير صالح'
+      case 'user-disabled':
+        return 'This account has been disabled.'; // 'تم تعطيل هذا الحساب'
+      case 'user-not-found':
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Incorrect email or password.'; // 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
+      case 'email-already-in-use':
+        return 'This email is already registered.'; // 'هذا البريد مسجل بالفعل'
+      case 'weak-password':
+        return 'Password is too weak.'; // 'كلمة المرور ضعيفة'
+      case 'too-many-requests':
+        return 'Too many attempts. Try again later.'; // 'محاولات كثيرة، حاول لاحقًا'
+      case 'network-request-failed':
+        return 'Check your internet connection.'; // 'تحقق من اتصالك بالإنترنت'
+      case 'requires-recent-login':
+        return 'Please sign in again to continue.'; // 'يرجى تسجيل الدخول مرة أخرى'
+      default:
+        return 'Authentication failed ($code).'; // 'فشل تسجيل الدخول'
+    }
+  }
+}

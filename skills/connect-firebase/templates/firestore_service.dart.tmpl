@@ -1,0 +1,102 @@
+// TEMPLATE — per-collection Firestore service. Adapt:
+//   * singleton / locator / interface+impl to match the project
+//   * collection name constant (reuse FirestoreCollections-style file if present)
+//   * exception type (project's AppException/Failure if it has one)
+//   * messages in the project's UI language
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../models/item_model.dart';
+
+class ItemService {
+  ItemService({FirebaseFirestore? firestore}) : _db = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _db;
+  static const String collectionName = 'items';
+
+  CollectionReference<Map<String, dynamic>> get _col => _db.collection(collectionName);
+
+  // ---------- Create ----------
+  Future<String> create(ItemModel item) => _guard(() async {
+        _validateOrThrow(item);
+        final ref = item.id.isEmpty ? _col.doc() : _col.doc(item.id);
+        await ref.set(item.toCreateMap());
+        return ref.id;
+      });
+
+  // ---------- Read ----------
+  Future<ItemModel?> getById(String id) => _guard(() async {
+        final doc = await _col.doc(id).get();
+        return doc.exists ? ItemModel.fromFirestore(doc) : null;
+      });
+
+  Future<List<ItemModel>> getByUser(String userId) => _guard(() async {
+        final snap = await _col.where('userId', isEqualTo: userId).orderBy('createdAt', descending: true).get();
+        return snap.docs.map(ItemModel.fromFirestore).toList();
+      });
+
+  Stream<ItemModel?> watchById(String id) =>
+      _col.doc(id).snapshots().map((d) => d.exists ? ItemModel.fromFirestore(d) : null);
+
+  Stream<List<ItemModel>> watchAll() => _col
+      .orderBy('createdAt', descending: true)
+      .snapshots()
+      .map((s) => s.docs.map(ItemModel.fromFirestore).toList());
+
+  /// Needs composite index: userId ASC + createdAt DESC.
+  Stream<List<ItemModel>> watchByUser(String userId) => _col
+      .where('userId', isEqualTo: userId)
+      .orderBy('createdAt', descending: true)
+      .snapshots()
+      .map((s) => s.docs.map(ItemModel.fromFirestore).toList());
+
+  Future<int> count({String? userId}) => _guard(() async {
+        Query<Map<String, dynamic>> q = _col;
+        if (userId != null) q = q.where('userId', isEqualTo: userId);
+        final agg = await q.count().get();
+        return agg.count ?? 0;
+      });
+
+  // ---------- Update ----------
+  Future<void> update(ItemModel item) => _guard(() async {
+        if (item.id.isEmpty) throw Exception('Cannot update an item without id');
+        _validateOrThrow(item);
+        await _col.doc(item.id).update(item.toUpdateMap());
+      });
+
+  /// Partial update — values MUST use the same types as toMap() (e.g. Timestamp, not ISO String).
+  Future<void> updateFields(String id, Map<String, dynamic> fields) => _guard(() async {
+        await _col.doc(id).update({...fields, 'updatedAt': FieldValue.serverTimestamp()});
+      });
+
+  // ---------- Delete ----------
+  Future<void> delete(String id) => _guard(() => _col.doc(id).delete());
+
+  // ---------- Helpers ----------
+  void _validateOrThrow(ItemModel item) {
+    final error = item.validate();
+    if (error != null) throw Exception(error);
+  }
+
+  Future<T> _guard<T>(Future<T> Function() action) async {
+    try {
+      return await action();
+    } on FirebaseException catch (e) {
+      throw Exception(_firestoreMessage(e));
+    }
+  }
+
+  static String _firestoreMessage(FirebaseException e) {
+    switch (e.code) {
+      case 'permission-denied':
+        return 'You do not have permission to do this.'; // 'ليس لديك صلاحية للقيام بذلك'
+      case 'unavailable':
+        return 'Network unavailable. Please try again.'; // 'الشبكة غير متاحة، حاول مرة أخرى'
+      case 'not-found':
+        return 'The item no longer exists.'; // 'العنصر غير موجود'
+      case 'failed-precondition':
+        return 'A database index is required for this query.'; // check console link in e.message
+      default:
+        return e.message ?? 'Something went wrong.'; // 'حدث خطأ ما'
+    }
+  }
+}

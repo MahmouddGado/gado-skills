@@ -1,0 +1,92 @@
+// TEMPLATE — Provider / ChangeNotifier state layer. Register in MultiProvider:
+//   ChangeNotifierProvider(create: (_) => ItemProvider(ItemService())),
+// or, when it depends on the signed-in user:
+//   ChangeNotifierProxyProvider<AuthProvider, ItemProvider>(
+//     create: (_) => ItemProvider(ItemService()),
+//     update: (_, auth, p) => p!..bindUser(auth.currentUser?.id),
+//   ),
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+
+import '../models/item_model.dart';
+import '../services/item_service.dart';
+
+class ItemProvider extends ChangeNotifier {
+  ItemProvider(this._service);
+
+  final ItemService _service;
+  StreamSubscription<List<ItemModel>>? _sub;
+  String? _userId;
+
+  List<ItemModel> _items = const [];
+  bool _isLoading = false;
+  bool _isSaving = false;
+  String? _error;
+
+  List<ItemModel> get items => _items;
+  bool get isLoading => _isLoading;
+  bool get isSaving => _isSaving;
+  String? get error => _error;
+
+  /// Start (or switch) the live subscription for a user. Safe to call repeatedly.
+  void bindUser(String? userId) {
+    if (userId == _userId) return;
+    _userId = userId;
+    _sub?.cancel();
+    _items = const [];
+    if (userId == null) {
+      notifyListeners();
+      return;
+    }
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    _sub = _service.watchByUser(userId).listen(
+      (data) {
+        _items = data;
+        _isLoading = false;
+        _error = null;
+        notifyListeners();
+      },
+      onError: (Object e) {
+        _isLoading = false;
+        _error = _message(e);
+        notifyListeners();
+      },
+    );
+  }
+
+  void retry() {
+    final id = _userId;
+    _userId = null;
+    bindUser(id);
+  }
+
+  Future<String> add(ItemModel item) => _save(() => _service.create(item));
+  Future<void> update(ItemModel item) => _save(() => _service.update(item));
+  Future<void> remove(String id) => _save(() => _service.delete(id));
+
+  Future<T> _save<T>(Future<T> Function() action) async {
+    _isSaving = true;
+    _error = null;
+    notifyListeners();
+    try {
+      return await action();
+    } catch (e) {
+      _error = _message(e);
+      rethrow; // screen shows the message and does NOT show success
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  static String _message(Object e) => e.toString().replaceFirst('Exception: ', '');
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+}

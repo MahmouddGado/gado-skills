@@ -9,6 +9,7 @@ They work with Claude Code and other agents that support the open `SKILL.md` for
 | --- | --- |
 | [`flutter-cubit-clean`](skills/flutter-cubit-clean/SKILL.md) | Plan and implement Flutter features with Cubit, Clean Architecture, get_it + injectable, go_router, a sealed `Result` type, Arabic-first l10n and a 400–500 line limit per file. Has a plan mode and an implement mode. |
 | [`connect-firebase`](skills/connect-firebase/SKILL.md) | Wire one module of a Flutter app to Firebase Auth + Cloud Firestore end to end: complete, validated models, a service, the project's state layer, real screens instead of mock data, and full form validation. Run as `/connect-firebase <Module> [project-path]`. |
+| [`branch-commit-pr`](skills/branch-commit-pr/SKILL.md) | Put the current changes on a well-named `<type>/<kebab-description>` branch, commit them in logical Conventional Commits with no AI attribution, push, and open a GitHub PR with a Summary / Changes / How to test body. Run as `/branch-commit-pr`. |
 
 ## Install
 
@@ -20,6 +21,7 @@ Pick **one** method. Each lets you choose which skills to install.
 /plugin marketplace add MahmouddGado/gado-skills
 /plugin install flutter-cubit-clean@gado-skills
 /plugin install connect-firebase@gado-skills
+/plugin install branch-commit-pr@gado-skills
 ```
 
 Or run `/plugin`, open **gado-skills** and tick the skills you want.
@@ -31,6 +33,7 @@ Update later with `/plugin marketplace update gado-skills`.
 npx skills add MahmouddGado/gado-skills                          # interactive picker
 npx skills add MahmouddGado/gado-skills --skill flutter-cubit-clean
 npx skills add MahmouddGado/gado-skills --skill connect-firebase
+npx skills add MahmouddGado/gado-skills --skill branch-commit-pr
 npx skills add MahmouddGado/gado-skills --list                   # list only
 ```
 
@@ -102,6 +105,19 @@ model naming; date format; validators), shows a module map before editing, compl
 and validates the models, connects the service, state layer and screens, removes fake
 saves and mock data, and adds validators to every form. It only suggests Firestore
 rules and indexes — it never deploys them or runs `flutterfire configure` for you.
+
+## Using `branch-commit-pr`
+
+```text
+/branch-commit-pr
+```
+
+Or just ask to "commit and open a PR". It reads the diff, names the branch
+(`feat/…`, `fix/…`, `docs/…`, `chore/…`), stages explicit paths only, splits the work
+into logical Conventional Commits, pushes with `-u`, and opens the PR against the
+default branch with `gh`. It never adds Claude/AI trailers, never force-pushes or
+commits to the default branch, and asks before committing anything that looks like a
+secret or a large generated file. Needs an authenticated `gh` (`gh auth login`).
 
 ## Add a new skill
 

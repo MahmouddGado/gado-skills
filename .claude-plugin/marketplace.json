@@ -7,7 +7,7 @@
     "url": "https://github.com/MahmouddGado"
   },
   "metadata": {
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "plugins": [
     {
@@ -46,6 +46,25 @@
       ],
       "skills": [
         "./skills/connect-firebase"
+      ]
+    },
+    {
+      "name": "branch-commit-pr",
+      "description": "Put the current changes on a professionally named branch, commit them as clean Conventional Commits with no AI attribution, push, and open a GitHub pull request.",
+      "source": "./",
+      "strict": false,
+      "version": "1.0.0",
+      "category": "development",
+      "keywords": [
+        "git",
+        "github",
+        "pull-request",
+        "conventional-commits",
+        "branching",
+        "workflow"
+      ],
+      "skills": [
+        "./skills/branch-commit-pr"
       ]
     }
   ]
